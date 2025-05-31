@@ -1,23 +1,21 @@
 import Room from "../models/roomModel.js";
 
-// Save or update RoomData
-export async function saveOrUpdateRoomData(roomData) {
+// Save or update RoomData for caller or callee
+export async function saveOrUpdateRoomData({ roomId, role, data }) {
   try {
+    const updateField = role === "caller" ? "caller" : "callee";
+
+    const updatePayload = {};
+    Object.entries(data).forEach(([key, value]) => {
+      updatePayload[`${updateField}.${key}`] = value;
+    });
+
     const updatedRoom = await Room.findOneAndUpdate(
-      { roomId: roomData.roomId },
-      {
-        $set: {
-          offer: roomData.offer,
-          candidate: roomData.candidate,
-          userName: roomData.userName,
-          image: roomData.image,
-          audio: roomData.audio ?? false,
-          video: roomData.video ?? false,
-          remotePeerId: roomData.remotePeerId,
-        },
-      },
+      { roomId },
+      { $set: updatePayload },
       { upsert: true, new: true }
     );
+
     return updatedRoom;
   } catch (err) {
     console.error("Error saving or updating RoomData:", err);
